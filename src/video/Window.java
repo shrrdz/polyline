@@ -54,6 +54,11 @@ public class Window
         graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
     }
 
+    public void update()
+    {
+        panel.repaint();
+    }
+    
     public void close()
     {
         frame.dispose();
