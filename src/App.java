@@ -13,6 +13,7 @@ public class App
     private Input input;
 
     private LineRasterizer lineRasterizer;
+    private LineRasterizer previewRasterizer;
 
     private final Polygon polygon = new Polygon();
 
@@ -21,6 +22,7 @@ public class App
     private void start()
     {
         lineRasterizer = new LineRasterizer(window.image);
+        previewRasterizer = new LineRasterizer(window.image);
 
         initialize();
         update();
@@ -33,6 +35,21 @@ public class App
         rasterizeLine(polygon.getPoints(), 0x6097BA);
 
         window.update();
+    }
+
+    private void previewLine(double x, double y, int color)
+    {
+        update();
+
+        previewRasterizer.setColor(color);
+
+        if (input == Input.LEFT && polygon.getPoints().size() > 0)
+        {
+            int size = polygon.getPoints().size();
+
+            previewRasterizer.rasterize(polygon.getPoints().get(size - 1).x, polygon.getPoints().get(size - 1).y, x, y);
+            previewRasterizer.rasterize(polygon.getPoints().get(0).x, polygon.getPoints().get(0).y, x, y);
+        }
     }
 
     private void rasterizeLine(ArrayList<Point> points, int color)
@@ -78,6 +95,8 @@ public class App
                 if (event.getButton() == 1)
                 {
                     input = Input.LEFT;
+
+                    previewLine(event.getX(), event.getY(), 0x00FFFF);
                 }
             }
 
@@ -97,6 +116,12 @@ public class App
 
         MouseMotionAdapter mouseMotionAdapter = new MouseMotionAdapter()
         {
+            @Override
+            public void mouseDragged(MouseEvent event)
+            {
+                previewLine(event.getX(), event.getY(), 0x00FFFF);
+            }
+
             @Override
             public void mouseMoved(MouseEvent event)
             {
