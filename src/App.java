@@ -1,6 +1,7 @@
+import fill.Flood;
 import geometry.Point;
 import rasterization.*;
-import rasterization.Rasterizer.Pattern;
+import rasterization.Rasterizer.*;
 import video.Window;
 import shape.Polygon;
 
@@ -16,6 +17,11 @@ public class App
     private LineRasterizer lineRasterizer;
     private LineRasterizer previewRasterizer;
 
+    private final Flood floodFill = new Flood();
+
+    private Point floodNode;
+    private boolean flooded = false;
+
     private final Polygon polygon = new Polygon();
 
     private final Window window = new Window(800, 600);
@@ -24,6 +30,8 @@ public class App
     {
         lineRasterizer = new LineRasterizer(window.image);
         previewRasterizer = new LineRasterizer(window.image);
+
+        floodFill.setImage(window.image);
 
         initialize();
         update();
@@ -34,6 +42,12 @@ public class App
         window.clear(0x050505);
 
         rasterizeLine(polygon.getPoints(), 0x6097BA);
+
+        if (flooded)
+        {
+            floodFill.setNode((int) floodNode.x, (int) floodNode.y, 0x00FFFF);
+            floodFill.fill();
+        }
 
         window.update();
     }
@@ -80,7 +94,11 @@ public class App
                 {
                     switch (event.getKeyCode())
                     {
-                        case KeyEvent.VK_C: polygon.clearPoints(); break;
+                        case KeyEvent.VK_C: 
+                            polygon.clearPoints();
+
+                            flooded = false;
+                        break;
 
                         case KeyEvent.VK_ESCAPE: window.close();
                     }
@@ -114,6 +132,11 @@ public class App
                 switch (event.getButton())
                 {
                     case 1: polygon.addPoints(new Point(event.getX(), event.getY())); break;
+                    
+                    case 3:
+                        flooded = true;
+                        floodNode = new Point(event.getX(), event.getY());
+                    break;
                 }
 
                 input = Input.RELEASED;
