@@ -1,5 +1,6 @@
 import geometry.Point;
-import rasterization.LineRasterizer;
+import rasterization.*;
+import rasterization.Rasterizer.Pattern;
 import video.Window;
 import shape.Polygon;
 
@@ -42,6 +43,7 @@ public class App
         update();
 
         previewRasterizer.setColor(color);
+        previewRasterizer.pattern = Pattern.DASHED;
 
         if (input == Input.LEFT && polygon.getPoints().size() > 0)
         {
@@ -57,6 +59,7 @@ public class App
         if (points.size() > 1)
         {
             lineRasterizer.setColor(color);
+            lineRasterizer.pattern = Pattern.FULL;
 
             for (int i = 0; i < points.size(); i++)
             {

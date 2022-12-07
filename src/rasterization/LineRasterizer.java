@@ -9,7 +9,7 @@ public class LineRasterizer extends Rasterizer
         this.image = image;
     }
 
-    private void drawPixel(int x, int y, int color)
+    private void pixel(int x, int y, int color)
     {
         if (x >= 0 && x < image.getWidth() && y >= 0 && y < image.getHeight())
         {
@@ -37,11 +37,46 @@ public class LineRasterizer extends Rasterizer
         // y-intercept
         double q = steep ? (x0 - k * y0) : (y0 - k * x0);
         
-        for (double x = steep ? y0 : x0; steep ? (x <= y1) : (x <= x1); x++)
-        {
-            double y = k * x + q;
+        int i = 0;
 
-            drawPixel(steep ? (int) y : (int) x, steep ? (int) x : (int) y, color);
+        switch (pattern)
+        {
+            case FULL:
+                for (double x = steep ? y0 : x0; steep ? x <= y1 : x <= x1; x++)
+                {
+                    double y = k * x + q;
+
+                    pixel(steep ? (int) y : (int) x, steep ? (int) x : (int) y, color);
+                }
+            break;
+
+            case DOTTED:
+                for (double x = steep ? y0 : x0; steep ? x <= y1 : x <= x1; x += 4)
+                {
+                    double y = k * x + q;
+
+                    pixel(steep ? (int) y : (int) x, steep ? (int) x : (int) y, color);
+                }
+            break;
+
+            case DASHED:
+                for (double x = steep ? y0 : x0; steep ? x <= y1 : x <= x1; x++)
+                {
+                    double y = k * x + q;
+
+                    pixel(steep ? (int) y : (int) x, steep ? (int) x : (int) y, color);
+
+                    if (i < 8)
+                    {
+                        i++;
+                    }
+                    else
+                    {
+                        x += 4;
+                        i = 0;
+                    }
+                }
+            break;
         }
     }
 }
