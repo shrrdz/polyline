@@ -45,7 +45,7 @@ public class App
         previewRasterizer.setColor(color);
         previewRasterizer.pattern = Pattern.DASHED;
 
-        if (input == Input.LEFT && polygon.getPoints().size() > 0)
+        if (input == Input.LEFT && !polygon.getPoints().isEmpty())
         {
             int size = polygon.getPoints().size();
 
@@ -100,6 +100,11 @@ public class App
                     input = Input.LEFT;
 
                     previewLine(event.getX(), event.getY(), 0x00FFFF);
+
+                    if (polygon.getPoints().isEmpty())
+                    {
+                        polygon.addPoints(new Point(event.getX(), event.getY()));
+                    }
                 }
             }
 

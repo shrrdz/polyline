@@ -25,6 +25,15 @@ public class LineRasterizer extends Rasterizer
 
         boolean steep = Math.abs(rise) > Math.abs(run);
 
+        // if both endpoints have identical coordinates...
+        if (x0 == x1 && y0 == y1)
+        {
+            // ... rasterize the pixel right away
+            pixel((int) x0, (int) y0, color);
+
+            return;
+        }
+
         if (steep ? (y0 > y1) : (x0 > x1))
         {
             // swap both x and y endpoints
@@ -33,7 +42,7 @@ public class LineRasterizer extends Rasterizer
         }
 
         // slope
-        double k = steep ? (x1 - x0) / (y1 - y0) : (y1 - y0) / (x1 - x0);
+        double k = steep ? run / rise : rise / run;
         // y-intercept
         double q = steep ? (x0 - k * y0) : (y0 - k * x0);
         
