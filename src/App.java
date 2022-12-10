@@ -1,4 +1,5 @@
 import fill.Flood;
+import fill.Scanline;
 import geometry.Point;
 import rasterization.*;
 import rasterization.Rasterizer.*;
@@ -17,14 +18,18 @@ public class App
     private LineRasterizer lineRasterizer;
     private LineRasterizer previewRasterizer;
 
+    private final LineClipper lineClipper = new LineClipper();
+
     private final Flood floodFill = new Flood();
+    private final Scanline scanlineFill = new Scanline();
 
     private Point floodNode;
     private boolean flooded = false;
 
     private final Polygon polygon = new Polygon();
+    private final Polygon clipPolygon = new Polygon();
 
-    private final Window window = new Window(800, 600);
+    private final Window window = new Window(1024, 768);
     
     private void start()
     {
@@ -32,6 +37,9 @@ public class App
         previewRasterizer = new LineRasterizer(window.image);
 
         floodFill.setImage(window.image);
+        scanlineFill.setImage(window.image);
+
+        clipPolygon.addPoints(new Point(40, 170), new Point(40, 690), new Point(560, 690), new Point(560, 170));
 
         initialize();
         update();
@@ -41,7 +49,16 @@ public class App
     {
         window.clear(0x050505);
 
+        ArrayList<Point> clippedPoints = lineClipper.clippedPoints(polygon.getPoints(), clipPolygon.getPoints());
+
         rasterizeLine(polygon.getPoints(), 0x6097BA);
+        rasterizeLine(clipPolygon.getPoints(), 0x00FFFF);
+
+        // outline the clipped lines
+        rasterizeLine(clippedPoints, 0x00FFFF);
+
+        scanlineFill.setPoints(clippedPoints, 0x6097BA);
+        scanlineFill.fill();
 
         if (flooded)
         {
