@@ -6,7 +6,9 @@ import rasterization.Rasterizer.*;
 import video.Window;
 import shape.Polygon;
 
+import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 public class App
@@ -30,6 +32,8 @@ public class App
     private final Polygon clipPolygon = new Polygon();
 
     private final Window window = new Window(1024, 768);
+
+    private boolean help = true;
     
     private void start()
     {
@@ -64,6 +68,38 @@ public class App
         {
             floodFill.setNode((int) floodNode.x, (int) floodNode.y, 0x00FFFF);
             floodFill.fill();
+        }
+
+        Graphics text = window.image.getGraphics();
+
+        text.setColor(new Color(0xFFFFFF));
+
+        text.drawString("Help: [H]", 10, window.image.getHeight() - 30);
+        text.drawString("Clear canvas: [C]", 10, window.image.getHeight() - 10);
+        text.drawString("Close: [Escape]", window.image.getWidth() - 100, window.image.getHeight() - 10);
+
+        if (help)
+        {
+            Rectangle rectangle = new Rectangle(window.image.getWidth() / 2, 20, 900, 140);
+
+            int rx = rectangle.x - (rectangle.width / 2);
+
+            text.setColor(new Color(0x323232));
+            text.fillRect(rx, rectangle.y, rectangle.width, rectangle.height);
+            text.setColor(new Color(0xEEEEEE));
+            text.fillRect(rx + 2, rectangle.y + 2, rectangle.width - 4, rectangle.height - 4);
+
+            text.setColor(new Color(0x00000));
+            text.setFont(new Font("SansSerif", Font.BOLD, 12));
+            text.drawString("Line Rasterization", rx + 30, 50);
+            text.drawString("Flood Fill & Clip", rx + 700,50);
+
+            text.setFont(new Font("SansSerif", Font.PLAIN, 12));
+
+            text.drawString("Flood fill: [RMB]",  rx + 720, 80);
+
+            text.drawString("Line: Full", rx + 50, 140);
+            text.drawString("Flooded: " + flooded, rx + 720, 140);
         }
 
         window.update();
@@ -116,6 +152,8 @@ public class App
 
                             flooded = false;
                         break;
+
+                        case KeyEvent.VK_H: help = !help; break;
 
                         case KeyEvent.VK_ESCAPE: window.close();
                     }
@@ -177,9 +215,27 @@ public class App
             }
         };
 
+        ComponentAdapter componentAdapter = new ComponentAdapter()
+        {
+            @Override
+            public void componentResized(ComponentEvent event)
+            {
+                window.image = new BufferedImage(window.panel.getWidth(), window.panel.getHeight(), 1);
+
+                lineRasterizer= new LineRasterizer(window.image);
+                previewRasterizer = new LineRasterizer(window.image);
+
+                floodFill.setImage(window.image);
+                scanlineFill.setImage(window.image);
+
+                update();
+            }
+        };
+
         window.panel.addKeyListener(keyListener);
         window.panel.addMouseListener(mouseAdapter);
         window.panel.addMouseMotionListener(mouseMotionAdapter);
+        window.panel.addComponentListener(componentAdapter);
     }
 
     public static void main(String[] args)
