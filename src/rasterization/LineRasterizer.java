@@ -86,6 +86,30 @@ public class LineRasterizer extends Rasterizer
                     }
                 }
             break;
+
+            case DASH_DOTTED:
+                for (double x = steep ? y0 : x0; steep ? x <= y1 : x <= x1; x++)
+                {
+                    double y = k * x + q;
+
+                    pixel(steep ? (int) y : (int) x, steep ? (int) x : (int) y, color);
+
+                    if (i < 8)
+                    {
+                        i++;
+                    }
+                    else
+                    {
+                        x += 4;
+                        y = k * x + q;
+
+                        pixel(steep ? (int) y : (int) x, steep ? (int) x : (int) y, color);
+                        
+                        x += 4;
+                        i = 0;
+                    }
+                }
+            break;
         }
     }
 }

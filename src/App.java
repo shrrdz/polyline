@@ -33,6 +33,8 @@ public class App
 
     private final Window window = new Window(1024, 768);
 
+    private int linePattern;
+
     private boolean help = true;
     
     private void start()
@@ -95,10 +97,18 @@ public class App
             text.drawString("Flood Fill & Clip", rx + 700,50);
 
             text.setFont(new Font("SansSerif", Font.PLAIN, 12));
+            text.drawString("Change pattern: [D]", rx + 50, 80);
 
             text.drawString("Flood fill: [RMB]",  rx + 720, 80);
 
-            text.drawString("Line: Full", rx + 50, 140);
+            switch (lineRasterizer.pattern)
+            {
+                case FULL:        text.drawString("Line: Full", rx + 50, 140);        break;
+                case DOTTED:      text.drawString("Line: Dotted", rx + 50, 140);      break;
+                case DASHED:      text.drawString("Line: Dashed", rx + 50, 140);      break;
+                case DASH_DOTTED: text.drawString("Line: Dash-Dotted", rx + 50, 140); break;
+            }
+
             text.drawString("Flooded: " + flooded, rx + 720, 140);
         }
 
@@ -126,7 +136,14 @@ public class App
         if (points.size() > 1)
         {
             lineRasterizer.setColor(color);
-            lineRasterizer.pattern = Pattern.FULL;
+
+            switch (linePattern)
+            {
+                case 0: lineRasterizer.pattern = Pattern.FULL;        break;
+                case 1: lineRasterizer.pattern = Pattern.DOTTED;      break;
+                case 2: lineRasterizer.pattern = Pattern.DASHED;      break;
+                case 3: lineRasterizer.pattern = Pattern.DASH_DOTTED; break;
+            }
 
             for (int i = 0; i < points.size(); i++)
             {
@@ -147,6 +164,11 @@ public class App
                 {
                     switch (event.getKeyCode())
                     {
+                        case KeyEvent.VK_D: 
+                            linePattern++;
+                            if (linePattern > 3) linePattern = 0;
+                        break;
+
                         case KeyEvent.VK_C: 
                             polygon.clearPoints();
 

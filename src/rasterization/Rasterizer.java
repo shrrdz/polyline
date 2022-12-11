@@ -4,7 +4,7 @@ import java.awt.image.BufferedImage;
 
 public abstract class Rasterizer
 {
-    public enum Pattern { FULL, DOTTED, DASHED };
+    public enum Pattern { FULL, DOTTED, DASHED, DASH_DOTTED };
 
     protected int color;
 
