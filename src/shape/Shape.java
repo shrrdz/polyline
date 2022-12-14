@@ -18,6 +18,11 @@ public abstract class Shape
     {
         points.clear();
     }
+
+    public Point getPoint(int index)
+    {
+        return points.get(index);
+    }
     
     public ArrayList<Point> getPoints()
     {

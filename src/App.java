@@ -5,6 +5,7 @@ import rasterization.*;
 import rasterization.Rasterizer.*;
 import video.Window;
 import shape.Polygon;
+import shape.Triangle;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -24,18 +25,24 @@ public class App
 
     private final Flood floodFill = new Flood();
     private final Scanline scanlineFill = new Scanline();
+    private final Scanline triangleScanline = new Scanline();
 
     private Point floodNode;
-    private boolean flooded = false;
+    private boolean flooded;
 
     private final Polygon polygon = new Polygon();
+    private final Triangle triangle = new Triangle();
     private final Polygon clipPolygon = new Polygon();
 
     private final Window window = new Window(1024, 768);
 
     private int linePattern;
 
+    private double tx, ty;
+
     private boolean help = true;
+    private boolean triangleMode;
+    private boolean baseNormal;
     
     private void start()
     {
@@ -44,6 +51,7 @@ public class App
 
         floodFill.setImage(window.image);
         scanlineFill.setImage(window.image);
+        triangleScanline.setImage(window.image);
 
         clipPolygon.addPoints(new Point(40, 170), new Point(40, 690), new Point(560, 690), new Point(560, 170));
 
@@ -56,15 +64,21 @@ public class App
         window.clear(0x050505);
 
         ArrayList<Point> clippedPoints = lineClipper.clippedPoints(polygon.getPoints(), clipPolygon.getPoints());
+        ArrayList<Point> clippedTrianglePoints = lineClipper.clippedPoints(triangle.getPoints(), clipPolygon.getPoints());
 
         rasterizeLine(polygon.getPoints(), 0x6097BA);
+        rasterizeLine(triangle.getPoints(), 0xFF6347);
         rasterizeLine(clipPolygon.getPoints(), 0x00FFFF);
 
         // outline the clipped lines
         rasterizeLine(clippedPoints, 0x00FFFF);
+        rasterizeLine(clippedTrianglePoints, 0xFF0000);
 
         scanlineFill.setPoints(clippedPoints, 0x6097BA);
+        triangleScanline.setPoints(clippedTrianglePoints, 0xE6655C);
+
         scanlineFill.fill();
+        triangleScanline.fill();
 
         if (flooded)
         {
@@ -94,11 +108,16 @@ public class App
             text.setColor(new Color(0x00000));
             text.setFont(new Font("SansSerif", Font.BOLD, 12));
             text.drawString("Line Rasterization", rx + 30, 50);
+            text.drawString("Isosceles Triangle", rx + 280, 50);
             text.drawString("Flood Fill & Clip", rx + 700,50);
 
             text.setFont(new Font("SansSerif", Font.PLAIN, 12));
             text.drawString("Change pattern: [D]", rx + 50, 80);
 
+            text.drawString("Toggle triangle: [T]", rx + 300, 80);
+            text.drawString("Draw base normal: [N]", rx + 300, 100);
+
+            text.drawString("Triangle mode: " + (triangleMode ? (baseNormal ? "Base normal" : "ON") : "OFF"), rx + 300, 140);
             text.drawString("Flood fill: [RMB]",  rx + 720, 80);
 
             switch (lineRasterizer.pattern)
@@ -122,12 +141,34 @@ public class App
         previewRasterizer.setColor(color);
         previewRasterizer.pattern = Pattern.DASHED;
 
-        if (input == Input.LEFT && !polygon.getPoints().isEmpty())
+        if (input == Input.LEFT && !polygon.getPoints().isEmpty() && !triangleMode)
         {
             int size = polygon.getPoints().size();
 
-            previewRasterizer.rasterize(polygon.getPoints().get(size - 1).x, polygon.getPoints().get(size - 1).y, x, y);
-            previewRasterizer.rasterize(polygon.getPoints().get(0).x, polygon.getPoints().get(0).y, x, y);
+            previewRasterizer.rasterize(polygon.getPoint(size - 1).x, polygon.getPoint(size - 1).y, x, y);
+            previewRasterizer.rasterize(polygon.getPoint(0).x, polygon.getPoint(0).y, x, y);
+        }
+
+        if (input == Input.LEFT  && triangleMode)
+        {
+            int size = triangle.getPoints().size();
+
+            if (triangle.getPoints().size() == 1)
+            {
+                previewRasterizer.rasterize(triangle.getPoint(0).x, triangle.getPoint(0).y, x, y);
+                previewRasterizer.rasterize(triangle.getPoint(0).x, triangle.getPoint(0).y, x, y);
+            }
+            else
+            {
+                previewRasterizer.rasterize(triangle.getPoint(size - 1).x, triangle.getPoint(size - 1).y, tx, ty);
+                previewRasterizer.rasterize(triangle.getPoint(0).x, triangle.getPoint(0).y, tx, ty);
+
+                if (baseNormal)
+                {
+                    previewRasterizer.rasterize((triangle.getPoint(0).x + triangle.getPoint(1).x) / 2,
+                            (triangle.getPoint(0).y + triangle.getPoint(1).y) / 2, tx, ty);
+                }
+            }
         }
     }
 
@@ -169,8 +210,13 @@ public class App
                             if (linePattern > 3) linePattern = 0;
                         break;
 
+                        case KeyEvent.VK_T: triangleMode = !triangleMode; break;
+
+                        case KeyEvent.VK_N: baseNormal = !baseNormal; break;
+
                         case KeyEvent.VK_C: 
                             polygon.clearPoints();
+                            triangle.clearPoints();
 
                             flooded = false;
                         break;
@@ -194,11 +240,18 @@ public class App
                 {
                     input = Input.LEFT;
 
-                    previewLine(event.getX(), event.getY(), 0x00FFFF);
-
-                    if (polygon.getPoints().isEmpty())
+                    if (!triangleMode)
                     {
-                        polygon.addPoints(new Point(event.getX(), event.getY()));
+                        previewLine(event.getX(), event.getY(), 0x00FFFF);
+
+                        if (polygon.getPoints().isEmpty())
+                        {
+                            polygon.addPoints(new Point(event.getX(), event.getY()));
+                        }
+                    }
+                    else if (triangle.getPoints().isEmpty())
+                    {
+                        triangle.addPoints(new Point(event.getX(), event.getY()));
                     }
                 }
             }
@@ -208,8 +261,41 @@ public class App
             {
                 switch (event.getButton())
                 {
-                    case 1: polygon.addPoints(new Point(event.getX(), event.getY())); break;
-                    
+                    case 1: 
+                        if (!triangleMode)
+                        {
+                            polygon.addPoints(new Point(event.getX(), event.getY())); break;
+                        }
+                        else
+                        {
+                            if (triangle.getPoints().size() < 2)
+                            {
+                                triangle.addPoints(new Point(event.getX(), event.getY()));
+
+                                if (triangle.getPoint(0).x == triangle.getPoint(1).x && 
+                                    triangle.getPoint(0).y == triangle.getPoint(1).y)
+                                {
+                                    triangle.removePoint(1);
+                                }
+                            }
+                            else
+                            {
+                                if (triangle.getPoints().size() < 3)
+                                {
+                                    tx = triangle.calculateIsosceles(event.getX(), event.getY()).getKey();
+                                    ty = triangle.calculateIsosceles(event.getX(), event.getY()).getValue();
+
+                                    triangle.addPoints(new Point(tx, ty));
+
+                                    if (baseNormal)
+                                    {
+                                        triangle.addPoints(new Point(triangle.midpoint().x, triangle.midpoint().y), new Point(tx, ty));
+                                    }
+                                }
+                            }
+                        }
+                    break;
+
                     case 3:
                         flooded = true;
                         floodNode = new Point(event.getX(), event.getY());
@@ -227,7 +313,23 @@ public class App
             @Override
             public void mouseDragged(MouseEvent event)
             {
-                previewLine(event.getX(), event.getY(), 0x00FFFF);
+                if (!triangleMode)
+                {
+                    previewLine(event.getX(), event.getY(), 0x00FFFF);
+                }
+                else
+                {
+                    if (triangle.getPoints().size() == 2)
+                    {
+                        tx = triangle.calculateIsosceles(event.getX(), event.getY()).getKey();
+                        ty = triangle.calculateIsosceles(event.getX(), event.getY()).getValue();
+                    }
+
+                    if (triangle.getPoints().size() < 3)
+                    {
+                        previewLine(event.getX(), event.getY(), 0xFF2700);
+                    }
+                }
             }
 
             @Override
@@ -249,6 +351,7 @@ public class App
 
                 floodFill.setImage(window.image);
                 scanlineFill.setImage(window.image);
+                triangleScanline.setImage(window.image);
 
                 update();
             }
