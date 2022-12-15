@@ -38,9 +38,11 @@ public class App
 
     private int linePattern;
 
+    private int px, py;
     private double tx, ty;
 
     private boolean help = true;
+    private boolean darkMode = true;
     private boolean triangleMode;
     private boolean baseNormal;
     
@@ -61,7 +63,7 @@ public class App
 
     private void update()
     {
-        window.clear(0x050505);
+        window.clear(darkMode ? 0x050505 : 0xEEEEEE);
 
         ArrayList<Point> clippedPoints = lineClipper.clippedPoints(polygon.getPoints(), clipPolygon.getPoints());
         ArrayList<Point> clippedTrianglePoints = lineClipper.clippedPoints(triangle.getPoints(), clipPolygon.getPoints());
@@ -88,9 +90,13 @@ public class App
 
         Graphics text = window.image.getGraphics();
 
-        text.setColor(new Color(0xFFFFFF));
+        text.setColor(darkMode ? new Color(0xFFFFFF) : new Color(0x000000));
 
-        text.drawString("Help: [H]", 10, window.image.getHeight() - 30);
+        text.drawString("x - [" + px + "]", 10, 20);
+        text.drawString("y - [" + py + "]", 10, 40);
+
+        text.drawString("Help: [H]", 10, window.image.getHeight() - 50);
+        text.drawString("Background: [B]", 10, window.image.getHeight() - 30);
         text.drawString("Clear canvas: [C]", 10, window.image.getHeight() - 10);
         text.drawString("Close: [Escape]", window.image.getWidth() - 100, window.image.getHeight() - 10);
 
@@ -109,6 +115,7 @@ public class App
             text.setFont(new Font("SansSerif", Font.BOLD, 12));
             text.drawString("Line Rasterization", rx + 30, 50);
             text.drawString("Isosceles Triangle", rx + 280, 50);
+            text.drawString("Anti-aliasing", rx + 530,50);
             text.drawString("Flood Fill & Clip", rx + 700,50);
 
             text.setFont(new Font("SansSerif", Font.PLAIN, 12));
@@ -116,6 +123,8 @@ public class App
 
             text.drawString("Toggle triangle: [T]", rx + 300, 80);
             text.drawString("Draw base normal: [N]", rx + 300, 100);
+            
+            text.drawString("Toggle AA: [  ]", rx + 550, 80);
 
             text.drawString("Triangle mode: " + (triangleMode ? (baseNormal ? "Base normal" : "ON") : "OFF"), rx + 300, 140);
             text.drawString("Flood fill: [RMB]",  rx + 720, 80);
@@ -128,6 +137,7 @@ public class App
                 case DASH_DOTTED: text.drawString("Line: Dash-Dotted", rx + 50, 140); break;
             }
 
+            text.drawString("Anti-aliasing: OFF", rx + 550, 140);
             text.drawString("Flooded: " + flooded, rx + 720, 140);
         }
 
@@ -138,7 +148,7 @@ public class App
     {
         update();
 
-        previewRasterizer.setColor(color);
+        previewRasterizer.setColor(darkMode ? color : 0x000000);
         previewRasterizer.pattern = Pattern.DASHED;
 
         if (input == Input.LEFT && !polygon.getPoints().isEmpty() && !triangleMode)
@@ -176,7 +186,7 @@ public class App
     {
         if (points.size() > 1)
         {
-            lineRasterizer.setColor(color);
+            lineRasterizer.setColor(darkMode ? color : 0x000000);
 
             switch (linePattern)
             {
@@ -214,6 +224,7 @@ public class App
 
                         case KeyEvent.VK_N: baseNormal = !baseNormal; break;
 
+
                         case KeyEvent.VK_C: 
                             polygon.clearPoints();
                             triangle.clearPoints();
@@ -222,6 +233,8 @@ public class App
                         break;
 
                         case KeyEvent.VK_H: help = !help; break;
+
+                        case KeyEvent.VK_B: darkMode = !darkMode; break;
 
                         case KeyEvent.VK_ESCAPE: window.close();
                     }
@@ -330,11 +343,17 @@ public class App
                         previewLine(event.getX(), event.getY(), 0xFF2700);
                     }
                 }
+
+                px = event.getX();
+                py = event.getY();
             }
 
             @Override
             public void mouseMoved(MouseEvent event)
             {
+                px = event.getX();
+                py = event.getY();
+
                 update();
             }
         };
