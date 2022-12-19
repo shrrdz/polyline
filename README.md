@@ -10,7 +10,7 @@ Line rasterizer written in Java 8 with multiple additional features.
 - [x] isosceles triangle rasterization
 - [x] flood fill
 - [x] scanline fill
-- [ ] anti-aliasing
+- [x] anti-aliasing
 
 ## Dependencies
 - [Java 8 and above](https://www.java.com/en/)

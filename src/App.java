@@ -45,6 +45,7 @@ public class App
     private boolean darkMode = true;
     private boolean triangleMode;
     private boolean baseNormal;
+    private boolean antiAliasing;
     
     private void start()
     {
@@ -124,7 +125,7 @@ public class App
             text.drawString("Toggle triangle: [T]", rx + 300, 80);
             text.drawString("Draw base normal: [N]", rx + 300, 100);
             
-            text.drawString("Toggle AA: [  ]", rx + 550, 80);
+            text.drawString("Toggle AA: [A]", rx + 550, 80);
 
             text.drawString("Triangle mode: " + (triangleMode ? (baseNormal ? "Base normal" : "ON") : "OFF"), rx + 300, 140);
             text.drawString("Flood fill: [RMB]",  rx + 720, 80);
@@ -137,7 +138,7 @@ public class App
                 case DASH_DOTTED: text.drawString("Line: Dash-Dotted", rx + 50, 140); break;
             }
 
-            text.drawString("Anti-aliasing: OFF", rx + 550, 140);
+            text.drawString("Anti-aliasing: " + (antiAliasing ? "ON" : "OFF"), rx + 550, 140);
             text.drawString("Flooded: " + flooded, rx + 720, 140);
         }
 
@@ -155,8 +156,8 @@ public class App
         {
             int size = polygon.getPoints().size();
 
-            previewRasterizer.rasterize(polygon.getPoint(size - 1).x, polygon.getPoint(size - 1).y, x, y);
-            previewRasterizer.rasterize(polygon.getPoint(0).x, polygon.getPoint(0).y, x, y);
+            previewRasterizer.rasterize(polygon.getPoint(size - 1).x, polygon.getPoint(size - 1).y, x, y, antiAliasing ? true : false);
+            previewRasterizer.rasterize(polygon.getPoint(0).x, polygon.getPoint(0).y, x, y, antiAliasing ? true : false);
         }
 
         if (input == Input.LEFT  && triangleMode)
@@ -165,18 +166,18 @@ public class App
 
             if (triangle.getPoints().size() == 1)
             {
-                previewRasterizer.rasterize(triangle.getPoint(0).x, triangle.getPoint(0).y, x, y);
-                previewRasterizer.rasterize(triangle.getPoint(0).x, triangle.getPoint(0).y, x, y);
+                previewRasterizer.rasterize(triangle.getPoint(0).x, triangle.getPoint(0).y, x, y, antiAliasing ? true : false);
+                previewRasterizer.rasterize(triangle.getPoint(0).x, triangle.getPoint(0).y, x, y, antiAliasing ? true : false);
             }
             else
             {
-                previewRasterizer.rasterize(triangle.getPoint(size - 1).x, triangle.getPoint(size - 1).y, tx, ty);
-                previewRasterizer.rasterize(triangle.getPoint(0).x, triangle.getPoint(0).y, tx, ty);
+                previewRasterizer.rasterize(triangle.getPoint(size - 1).x, triangle.getPoint(size - 1).y, tx, ty, antiAliasing ? true : false);
+                previewRasterizer.rasterize(triangle.getPoint(0).x, triangle.getPoint(0).y, tx, ty, antiAliasing ? true : false);
 
                 if (baseNormal)
                 {
                     previewRasterizer.rasterize((triangle.getPoint(0).x + triangle.getPoint(1).x) / 2,
-                            (triangle.getPoint(0).y + triangle.getPoint(1).y) / 2, tx, ty);
+                            (triangle.getPoint(0).y + triangle.getPoint(1).y) / 2, tx, ty, antiAliasing ? true : false);
                 }
             }
         }
@@ -190,16 +191,27 @@ public class App
 
             switch (linePattern)
             {
-                case 0: lineRasterizer.pattern = Pattern.FULL;        break;
-                case 1: lineRasterizer.pattern = Pattern.DOTTED;      break;
-                case 2: lineRasterizer.pattern = Pattern.DASHED;      break;
-                case 3: lineRasterizer.pattern = Pattern.DASH_DOTTED; break;
+                case 0:
+                    lineRasterizer.pattern = Pattern.FULL;
+                break;
+
+                case 1:
+                    lineRasterizer.pattern = Pattern.DOTTED;
+                break;
+
+                case 2:
+                    lineRasterizer.pattern = Pattern.DASHED;
+                break;
+
+                case 3:
+                    lineRasterizer.pattern = Pattern.DASH_DOTTED;
+                break;
             }
 
             for (int i = 0; i < points.size(); i++)
             {
                 lineRasterizer.rasterize(points.get(i).x, points.get(i).y,
-                    points.get((i + 1) % points.size()).x, points.get((i + 1) % points.size()).y);
+                    points.get((i + 1) % points.size()).x, points.get((i + 1) % points.size()).y, antiAliasing ? true : false);
             }
         }
     }
@@ -224,6 +236,7 @@ public class App
 
                         case KeyEvent.VK_N: baseNormal = !baseNormal; break;
 
+                        case KeyEvent.VK_A: antiAliasing = !antiAliasing; break;
 
                         case KeyEvent.VK_C: 
                             polygon.clearPoints();

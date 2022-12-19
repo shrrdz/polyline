@@ -17,5 +17,5 @@ public abstract class Rasterizer
         this.color = color;
     }
 
-    public abstract void rasterize(double x0, double x1, double y0, double y1);
+    public abstract void rasterize(double x0, double y0, double x1, double y1, boolean antiAliased);
 }
